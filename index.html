@@ -73,13 +73,33 @@
   .sec-body { padding: 16px 18px 20px; }
 
   /* Controls */
-  .filters { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; margin-bottom: 14px; }
-  .fgroup { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .fgroup > span { font: 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; margin-right: 4px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin-bottom: 14px; }
   .chip { font: 700 14px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 8px 12px; cursor: pointer; color: var(--ink); }
   .chip:hover { border-color: var(--accent); }
   .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
   .chip:focus-visible, summary:focus-visible, .search:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Filter dropdowns */
+  .filters { position: relative; }
+  .dd { position: relative; }
+  .dd-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px 0 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 3px; cursor: pointer; color: var(--ink); max-width: 100%; }
+  .dd-btn:hover, .dd-btn[aria-expanded="true"] { border-color: var(--accent); }
+  .dd-btn:focus-visible, .dd-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .dd-k { font: 12px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; flex: none; }
+  .dd-v { font: 700 15px/1 var(--display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .dd-btn .chev { width: 18px; height: 18px; transform: rotate(90deg); color: var(--ink); }
+  .dd-btn[aria-expanded="true"] .chev { transform: rotate(-90deg); color: var(--accent-ink); }
+  .dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 15; min-width: 230px; display: grid; gap: 2px; padding: 6px;
+    background: #0a0f17; border: 1px solid var(--line); border-top: 2px solid var(--accent); border-radius: 3px; box-shadow: 0 10px 28px rgba(0,0,0,0.55); }
+  .dd-opt { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 0 10px; background: transparent; border: 0; border-radius: 3px;
+    text-align: left; font: 600 15px/1.2 var(--body); color: var(--ink); cursor: pointer; }
+  .dd-opt:hover { background: var(--panel-2); }
+  .dd-opt .box { width: 19px; height: 19px; flex: none; border: 1.5px solid var(--ink); border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; }
+  .dd-opt .box.round { border-radius: 50%; }
+  .dd-opt[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+  .dd-opt[aria-checked="true"] .box::after { content: ""; width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+  .dd-opt[aria-checked="true"] .box.round::after { width: 7px; height: 7px; border: 0; border-radius: 50%; background: #fff; transform: none; }
+  .dd-menu[hidden] { display: none; }
+  .dd-sep { height: 1px; background: var(--line-soft); margin: 3px 4px; }
   .search { background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 8px 10px; font: 14px/1 var(--mono); color: var(--ink); width: 200px; max-width: 100%; }
   .search::placeholder { color: var(--ink); opacity: 0.75; }
 
@@ -162,6 +182,10 @@
   .grid tr.phead .pname, .watch-m .pname { position: sticky; left: 10px; font: 700 16px/1.2 var(--display); letter-spacing: 0.04em; }
   .watch-m tr.phead td { background: var(--band); padding: 9px 8px; }
   .watch-m .rk { margin-left: 6px; }
+  .watch-m .wv { white-space: nowrap; }
+  .watch-m .wl { font: 12px/1 var(--mono); letter-spacing: 0.04em; color: var(--ink); }
+  .tip-list { margin: 6px 0 8px; padding-left: 18px; }
+  .tip-list li { margin: 2px 0; }
 
   @media (max-width: 900px) {
     .band-body { grid-template-columns: minmax(0, 1fr); }
@@ -178,11 +202,18 @@
     h2 { font-size: 21px; letter-spacing: 0.06em; }
     h2 .ico { font-size: 14px; }
     .filters { gap: 10px; margin-bottom: 12px; }
-    .fgroup { flex-wrap: nowrap; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-    .fgroup::-webkit-scrollbar { display: none; }
-    .fgroup > span { flex: none; width: 46px; font-size: 11px; letter-spacing: 0.1em; }
     .chip { flex: none; font-size: 13px; padding: 9px 10px; }
-    .search { width: 100%; font-size: 16px; }
+    .search { width: 100%; font-size: 16px; min-height: 40px; grid-column: 1 / -1; }
+    /* Phones: the three dropdowns share one row; an open menu spans the full width below them. */
+    .filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .dd { position: static; min-width: 0; }
+    /* Label on top, choice underneath, so the choice gets the button's full width. */
+    .dd-btn { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 16px; grid-template-rows: auto auto; column-gap: 4px; row-gap: 4px;
+      align-items: center; text-align: left; padding: 7px 6px 7px 10px; min-height: 50px; }
+    .dd-k { grid-column: 1; grid-row: 1; font-size: 10.5px; letter-spacing: 0.1em; }
+    .dd-v { grid-column: 1; grid-row: 2; font-size: 15px; }
+    .dd-btn .chev { grid-column: 2; grid-row: 1 / span 2; width: 16px; height: 16px; }
+    .dd-menu { left: 0; right: 0; top: 58px; min-width: 0; }
     .grid.grouped .stick1 { min-width: 78px; max-width: 92px; border-right: 2px solid var(--line); }
     .grid td, .grid th { min-width: 0; padding: 8px 8px; font-size: 13.5px; }
     .grid td.num { min-width: 70px; }
@@ -236,7 +267,7 @@
   window.removeEventListener("error", window.LZ_ON_ERROR);
   var app = document.getElementById("app");
   var D = window.LZ_ALLIANCE;
-  var STORE = "lz-alliance-v4";
+  var STORE = "lz-alliance-v5";
   var CHEV = '<svg class="chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var WINDOW_DAYS = 30;
   // Watchlist: flag a stat that grew 0.1% or less over 7 days, or 0.5% or less over 30 days. HQ and Troop Power are excluded.
@@ -312,9 +343,10 @@
   function byPower(a, b) { return (val(b, latest, "total") || 0) - (val(a, latest, "total") || 0); }
 
   // ---------- saved view state ----------
-  var state = { stats: ["total"], range: "latest", rank: "all", q: "", sumView: "1", open: { "sec:stats": true, "sec:watch": true, "sec:summary": true, "sec:ref": false, "band:total": true } };
+  var state = { stats: ["total"], range: "latest", ranks: [], q: "", sumView: "1", open: { "sec:stats": true, "sec:watch": true, "sec:summary": true, "sec:ref": false, "band:total": true } };
   try { var saved = JSON.parse(localStorage.getItem(STORE) || "null"); if (saved) for (var k in saved) state[k] = saved[k]; } catch (e) {}
   if (!Array.isArray(state.stats) || !state.stats.length) state.stats = ["total"];
+  if (!Array.isArray(state.ranks)) state.ranks = [];
   function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
 
   // ---------- header + hero ----------
@@ -379,39 +411,71 @@
   }
 
   // ----- Member Stats -----
+  // Stats / Dates / Rank are dropdowns: click to open, tick what you want. Stats and Rank allow several.
+  var openDD = null;
   function renderStatFilters() {
+    var RANGES = [["latest", "Latest"], ["4", "Last 4"], ["all", "All"]];
     var el = document.getElementById("st-filters");
-    var allOn = state.stats.length === STATS.length;
     var ranks = ["R4", "R3", "R2", "R1"].filter(function (r) { return tracked.some(function (m) { return m.rank === r; }); });
+    var allStats = state.stats.length === STATS.length;
+    var statSummary = allStats ? "All" : state.stats.length === 1
+      ? shortStat(STATS.filter(function (s) { return s[0] === state.stats[0]; })[0][1])
+      : state.stats.length + " stats";
+    var rankSummary = !state.ranks.length ? "All" : state.ranks.join(", ");
+    function opt(act, v, label, checked, radio) {
+      return '<button type="button" class="dd-opt" role="' + (radio ? "menuitemradio" : "menuitemcheckbox") + '" aria-checked="' + checked + '" data-act="' + act + '" data-v="' + esc(v) + '">' +
+        '<span class="box' + (radio ? " round" : "") + '"></span>' + esc(label) + "</button>";
+    }
+    function dd(id, label, summary, items) {
+      var open = openDD === id;
+      return '<div class="dd" data-dd="' + id + '"><button type="button" class="dd-btn" aria-haspopup="true" aria-expanded="' + open + '">' +
+        '<span class="dd-k">' + esc(label) + '</span><span class="dd-v">' + esc(summary) + "</span>" + CHEV + "</button>" +
+        '<div class="dd-menu" role="menu" aria-label="' + esc(label) + '"' + (open ? "" : " hidden") + ">" + items + "</div></div>";
+    }
     el.innerHTML =
-      '<div class="fgroup" role="group" aria-label="Stats"><span>Stats</span>' +
-        '<button class="chip" data-act="all" aria-pressed="' + allOn + '">All</button>' +
-        STATS.map(function (s) {
-          return '<button class="chip" data-act="stat" data-v="' + s[0] + '" aria-pressed="' + (state.stats.indexOf(s[0]) >= 0) + '">' + esc(s[1].replace(" Power", "")) + "</button>";
-        }).join("") + "</div>" +
-      '<div class="fgroup" role="group" aria-label="Dates"><span>Dates</span>' +
-        [["latest", "Latest"], ["4", "Last 4"], ["all", "All"]].map(function (o) {
-          return '<button class="chip" data-act="range" data-v="' + o[0] + '" aria-pressed="' + (state.range === o[0]) + '">' + o[1] + "</button>";
-        }).join("") + "</div>" +
-      (ranks.length > 1 ? '<div class="fgroup" role="group" aria-label="Rank"><span>Rank</span>' +
-        [["all", "All"]].concat(ranks.map(function (r) { return [r, r]; })).map(function (o) {
-          return '<button class="chip" data-act="rank" data-v="' + o[0] + '" aria-pressed="' + (state.rank === o[0]) + '">' + o[1] + "</button>";
-        }).join("") + "</div>" : "") +
-      '<div class="fgroup"><input class="search" id="q" type="search" placeholder="Find member" value="' + esc(state.q) + '" aria-label="Find member"></div>';
+      dd("stats", "Stats", statSummary,
+        opt("allstats", "", "All stats", allStats) + '<div class="dd-sep"></div>' +
+        STATS.map(function (s) { return opt("stat", s[0], s[1], state.stats.indexOf(s[0]) >= 0); }).join("")) +
+      dd("dates", "Dates", RANGES.filter(function (o) { return o[0] === state.range; })[0][1],
+        RANGES.map(function (o) { return opt("range", o[0], o[1], state.range === o[0], true); }).join("")) +
+      (ranks.length > 1 ? dd("rank", "Rank", rankSummary,
+        opt("allranks", "", "All ranks", !state.ranks.length) + '<div class="dd-sep"></div>' +
+        ranks.map(function (r) { return opt("rank", r, r, state.ranks.indexOf(r) >= 0); }).join("")) : "") +
+      '<input class="search" id="q" type="search" placeholder="Find member" value="' + esc(state.q) + '" aria-label="Find member">';
     el.onclick = function (e) {
-      var b = e.target.closest("button.chip"); if (!b) return;
-      var act = b.getAttribute("data-act"), v = b.getAttribute("data-v");
-      if (act === "all") state.stats = state.stats.length === STATS.length ? ["total"] : STATS.map(function (s) { return s[0]; });
+      var btn = e.target.closest(".dd-btn");
+      if (btn) { var id = btn.parentNode.getAttribute("data-dd"); openDD = openDD === id ? null : id; renderStatFilters(); return; }
+      var o = e.target.closest(".dd-opt"); if (!o) return;
+      var act = o.getAttribute("data-act"), v = o.getAttribute("data-v");
+      if (act === "allstats") state.stats = allStats ? ["total"] : STATS.map(function (s) { return s[0]; });
       if (act === "stat") {
         var i = state.stats.indexOf(v);
-        if (i >= 0) { if (state.stats.length > 1) state.stats.splice(i, 1); } else state.stats.push(v);
+        if (i >= 0) { if (state.stats.length > 1) state.stats.splice(i, 1); }
+        else state.stats = STATS.map(function (s) { return s[0]; }).filter(function (k) { return k === v || state.stats.indexOf(k) >= 0; });
       }
-      if (act === "range") state.range = v;
-      if (act === "rank") state.rank = v;
+      if (act === "range") { state.range = v; openDD = null; }  // single choice: close after picking
+      if (act === "allranks") state.ranks = [];
+      if (act === "rank") {
+        var j = state.ranks.indexOf(v);
+        if (j >= 0) state.ranks.splice(j, 1); else state.ranks.push(v);
+        if (state.ranks.length === ranks.length) state.ranks = [];  // every rank ticked = all
+      }
       save(); renderStatFilters(); renderGrid();
+      var again = el.querySelector('.dd[data-dd="' + openDD + '"] .dd-opt[data-act="' + act + '"][data-v="' + v + '"]');
+      if (again) again.focus();
     };
     document.getElementById("q").oninput = function (e) { state.q = e.target.value; save(); renderGrid(); };
   }
+  // Close an open dropdown on an outside click or Escape.
+  document.addEventListener("click", function (e) {
+    if (openDD && !e.target.closest(".dd")) { openDD = null; renderStatFilters(); }
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && openDD) {
+      var id = openDD; openDD = null; renderStatFilters();
+      var b = document.querySelector('.dd[data-dd="' + id + '"] .dd-btn'); if (b) b.focus();
+    }
+  });
 
   function renderGrid() {
     var el = document.getElementById("grid");
@@ -419,7 +483,7 @@
     var stats = STATS.filter(function (s) { return state.stats.indexOf(s[0]) >= 0; });
     var q = state.q.trim().toLowerCase();
     var list = tracked.filter(function (m) {
-      return (state.rank === "all" || m.rank === state.rank) && (!q || m.name.toLowerCase().indexOf(q) >= 0);
+      return (!state.ranks.length || state.ranks.indexOf(m.rank) >= 0) && (!q || m.name.toLowerCase().indexOf(q) >= 0);
     }).sort(byPower);
     if (!list.length) { el.innerHTML = '<div class="notice">No members match.</div>'; return; }
 
@@ -463,28 +527,18 @@
     var el = document.getElementById("watch");
     if (!prev) { el.innerHTML = '<div class="notice">Fills in after the second capture.</div>'; return; }
     var title = '<div class="tbl-title flags-title">Flags' + info("flag-info", "How flags work",
-      'A stat is flagged when it grew <b class="nw">+0.1% or less in 7 days</b> (since ' + nwDate(base7) +
-      ') or <b class="nw">+0.5% or less in 30 days</b> (since ' + nwDate(baseL) + '). HQ Level and Troop Power are not checked.') + "</div>";
+      'A stat is flagged when it grew:<ul class="tip-list"><li>Less than +0.1% in 7 days</li><li>or Less than +0.5% in 30 days</li></ul>HQ Level and Troop Power are not checked.') + "</div>";
     if (!watch.length) { el.innerHTML = title + '<div class="notice">Nobody flagged.</div>'; return; }
-    function cell(c, hit) {  // two decimals so a value just above a threshold doesn't read as equal to it
-      if (!c) return "—";
-      return hit ? '<span class="pill down">' + pctText(c.pct, 2) + "</span>" : '<span class="' + (c.pct > 0 ? "up" : "down") + '">' + pctText(c.pct, 2) + "</span>";
+    function cell(c, hit, label) {  // two decimals so a value just above a threshold doesn't read as equal to it
+      var v = !c ? "—" : hit ? '<span class="pill down">' + pctText(c.pct, 2) + "</span>" : '<span class="' + (c.pct > 0 ? "up" : "down") + '">' + pctText(c.pct, 2) + "</span>";
+      return '<span class="wv">' + v + ' <span class="wl">(' + label + ")</span></span>";
     }
-    if (phone()) {
-      el.innerHTML = title + '<div class="tscroll"><table class="mini watch-m"><thead><tr><th class="l">Stat</th><th>7d · ' + fmtDate(base7, true) + "</th><th>30d · " + fmtDate(baseL, true) + "</th></tr></thead><tbody>" +
-        watch.map(function (w, i) {
-          var first = i === 0 || watch[i - 1].m !== w.m;
-          return (first ? '<tr class="phead"><td class="l" colspan="3"><span class="pname">' + esc(w.m.name) + "</span> " + rk(w.m.rank) + "</td></tr>" : "") +
-            '<tr><td class="l statcell">' + esc(shortStat(w.s[1])) + "</td><td>" + cell(w.c7, w.hit7) + "</td><td>" + cell(w.cL, w.hitL) + "</td></tr>";
-        }).join("") + "</tbody></table></div>";
-      return;
-    }
-    el.innerHTML = title + '<div class="tscroll"><table class="mini"><thead><tr><th class="l">Player</th><th class="l">Rank</th><th class="l">Stat</th><th>Now</th>' +
-      "<th>7 days · " + fmtDate(base7, true) + "</th><th>30 days · " + fmtDate(baseL, true) + "</th></tr></thead><tbody>" +
+    // One block per player: a name row, then one row per flagged stat. No column header.
+    el.innerHTML = title + '<div class="tscroll"><table class="mini watch-m"><tbody>' +
       watch.map(function (w, i) {
         var first = i === 0 || watch[i - 1].m !== w.m;
-        return '<tr' + (first && i ? ' class="grp"' : "") + '><td class="n">' + (first ? esc(w.m.name) : "") + '</td><td class="l">' + (first ? rk(w.m.rank) : "") +
-          '</td><td class="l statcell">' + esc(w.s[1]) + "</td><td>" + big(val(w.m, latest, w.s[0])) + "</td><td>" + cell(w.c7, w.hit7) + "</td><td>" + cell(w.cL, w.hitL) + "</td></tr>";
+        return (first ? '<tr class="phead"><td class="l" colspan="3"><span class="pname">' + esc(w.m.name) + "</span> " + rk(w.m.rank) + "</td></tr>" : "") +
+          '<tr><td class="l statcell">' + esc(phone() ? shortStat(w.s[1]) : w.s[1]) + "</td><td>" + cell(w.c7, w.hit7, "Last 7") + "</td><td>" + cell(w.cL, w.hitL, "Last 30") + "</td></tr>";
       }).join("") + "</tbody></table></div>";
   }
 
