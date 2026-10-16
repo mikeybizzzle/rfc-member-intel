@@ -441,8 +441,14 @@
                      (one ? "" : '<td class="l statname stick2">' + esc(s[1]) + "</td>"));
         shown.forEach(function (d) {
           var v = val(m, d, s[0]), pi = dates.indexOf(d) - 1, pv = pi >= 0 ? val(m, dates[pi], s[0]) : null;
-          var delta = v != null && pv ? (v - pv) / pv : null;
-          h += '<td class="num">' + fmt(s[0], v) + '</td><td class="dl">' + pctCell(delta) + "</td>";
+          var dcell;
+          if (s[0] === "hq") {  // HQ Level: levels gained (0, +1, +2), not a percentage
+            var lv = v != null && pv != null ? v - pv : null;
+            dcell = lv == null ? "—" : '<span class="' + (lv > 0 ? "up" : lv < 0 ? "down" : "") + '">' + (lv > 0 ? "+" : "") + lv + "</span>";
+          } else {
+            dcell = pctCell(v != null && pv ? (v - pv) / pv : null);
+          }
+          h += '<td class="num">' + fmt(s[0], v) + '</td><td class="dl">' + dcell + "</td>";
         });
         h += "</tr>";
       });
