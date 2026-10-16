@@ -137,7 +137,7 @@
   .band:first-child { margin-top: 0; }
   .band > summary { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--band); font: 700 19px/1 var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
   .band > summary:hover { background: var(--panel-2); }
-  .band-body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 14px; }
+  .band-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 14px; }
   .tbl-title { font: 700 15px/1.2 var(--display); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
   .tbl-title .d { color: var(--accent-ink); }
   .mini td, .mini th { padding: 7px 8px; font-size: 13.5px; }
@@ -147,6 +147,7 @@
   .mini tr:nth-child(-n+3) td.rank { color: var(--accent-ink); font-weight: 700; }
   .mini td.pct { font-weight: 700; }
   .band .c-start { display: none; }
+  .band .tbl-title .range { display: block; margin-top: 4px; color: var(--accent-ink); }
   .mini td.statcell { font: 600 14px/1.2 var(--body); }
   .mini tr.grp td { border-top: 2px solid var(--line); }
 
@@ -222,7 +223,7 @@
     .band > summary { font-size: 17px; padding: 11px 12px; }
     .band-body { padding: 10px; gap: 0; }
     .band-body > div { display: none; }
-    .band-body[data-view="0"] > div:nth-child(1), .band-body[data-view="1"] > div:nth-child(2), .band-body[data-view="2"] > div:nth-child(3) { display: block; }
+    .band-body[data-view="1"] > div:nth-child(1), .band-body[data-view="2"] > div:nth-child(2) { display: block; }
     .seg { display: flex; gap: 6px; padding: 10px 10px 0; }
     .seg .chip { flex: 1; text-align: center; padding: 9px 4px; }
     .c-start, .c-gain { display: none; }
@@ -347,6 +348,7 @@
   try { var saved = JSON.parse(localStorage.getItem(STORE) || "null"); if (saved) for (var k in saved) state[k] = saved[k]; } catch (e) {}
   if (!Array.isArray(state.stats) || !state.stats.length) state.stats = ["total"];
   if (!Array.isArray(state.ranks)) state.ranks = [];
+  if (state.sumView !== "1" && state.sumView !== "2") state.sumView = "1";
   function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
 
   // ---------- header + hero ----------
@@ -550,11 +552,11 @@
       var tip = "Players are ranked by % change in " + esc(s[1].toLowerCase()) + " from most to least.";
       return '<details class="band" data-key="' + key + '"' + (state.open[key] ? " open" : "") + "><summary>" + CHEV + esc(s[1]) +
         info("info-" + s[0], "How " + s[1] + " is ranked", tip) + "</summary>" +
-        '<div class="seg" role="group" aria-label="View">' + [["0", "All time"], ["1", "Since last"], ["2", full30 ? "30 days" : "Since first"]].map(function (o) {
+        '<div class="seg" role="group" aria-label="View">' + [["1", "Since last"], ["2", "30 days"]].map(function (o) {
           return '<button class="chip" data-sv="' + o[0] + '" aria-pressed="' + (state.sumView === o[0]) + '">' + o[1] + "</button>";
         }).join("") + "</div>" +
-        '<div class="band-body" data-view="' + esc(state.sumView) + '">' + changeTable(s[0], prev ? dates[0] : null, "All time") + changeTable(s[0], prev, "Since previous capture") +
-        changeTable(s[0], base30, full30 ? "Last 30 days" : "Since first capture") + "</div></details>";
+        '<div class="band-body" data-view="' + esc(state.sumView) + '">' + changeTable(s[0], prev, "Since previous capture") +
+        changeTable(s[0], base30, "Last 30 days") + "</div></details>";
     }).join("");
     el.onclick = function (e) {
       var b = e.target.closest("button[data-sv]"); if (!b) return;
@@ -564,7 +566,7 @@
     };
   }
   function changeTable(key, from, title) {
-    var head = '<div class="tbl-title">' + esc(title) + (from ? ' · <span class="d">' + fmtDate(from, true) + "</span>" + est(from) : "") + "</div>";
+    var head = '<div class="tbl-title">' + esc(title) + ":" + (from ? '<span class="range"><span class="d">' + fmtDate(from, true) + "</span> → " + fmtDate(latest, true) + "</span>" : "") + "</div>";
     if (!from) return "<div>" + head + '<div class="notice">Fills in after the second capture.</div></div>';
     var rows = [];
     tracked.forEach(function (m) { var c = change(m, key, from); if (c) rows.push({ m: m, c: c }); });
