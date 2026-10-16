@@ -271,8 +271,9 @@
   var STORE = "lz-alliance-v5";
   var CHEV = '<svg class="chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var WINDOW_DAYS = 30;
-  // Watchlist: flag a stat that grew 0.1% or less over 7 days, or 0.5% or less over 30 days. HQ and Troop Power are excluded.
+  // Watchlist: flag a stat that grew 0.1% or less over 7 days, or 0.5% or less over 30 days (Total Power: 0.3% / 2%). HQ and Troop Power are excluded.
   var WATCH = { short: { days: 7, max: 0.001 }, long: { days: 30, max: 0.005 } };
+  var WATCH_LIMITS = { total: { short: 0.003, long: 0.02 } };  // Total Power: +0.3% in 7 days, +2% in 30 days
   var WATCH_STATS = [["total", "Total Power"], ["kills", "Kills"], ["structure", "Structure Power"], ["tech", "Tech Power"], ["hero", "Hero Power"], ["mod", "Mod Vehicle Power"]];
   // Member Stats rows, in the same order as the spreadsheet (Troop last).
   var STATS = [["hq", "HQ Level"], ["total", "Total Power"], ["kills", "Kills"], ["structure", "Structure Power"], ["tech", "Tech Power"],
@@ -373,7 +374,8 @@
   if (prev) tracked.forEach(function (m) {
     WATCH_STATS.forEach(function (s) {
       var c7 = change(m, s[0], base7), cL = change(m, s[0], baseL);
-      var hit7 = !!(c7 && c7.pct <= WATCH.short.max), hitL = !!(cL && cL.pct <= WATCH.long.max);
+      var lim = WATCH_LIMITS[s[0]] || { short: WATCH.short.max, long: WATCH.long.max };
+      var hit7 = !!(c7 && c7.pct <= lim.short), hitL = !!(cL && cL.pct <= lim.long);
       if (hit7 || hitL) { watch.push({ m: m, s: s, c7: c7, cL: cL, hit7: hit7, hitL: hitL }); flaggedMembers[m.name] = 1; }
     });
   });
@@ -529,7 +531,8 @@
     var el = document.getElementById("watch");
     if (!prev) { el.innerHTML = '<div class="notice">Fills in after the second capture.</div>'; return; }
     var title = '<div class="tbl-title flags-title">Flags' + info("flag-info", "How flags work",
-      'A stat is flagged when it grew:<ul class="tip-list"><li>Less than +0.1% in 7 days</li><li>or Less than +0.5% in 30 days</li></ul>HQ Level and Troop Power are not checked.') + "</div>";
+      'A stat is flagged when it grew:<ul class="tip-list"><li>Total Power: Less than +0.3% in 7 days or Less than +2% in 30 days</li>' +
+      '<li>Other stats: Less than +0.1% in 7 days or Less than +0.5% in 30 days</li></ul>HQ Level and Troop Power are not checked.') + "</div>";
     if (!watch.length) { el.innerHTML = title + '<div class="notice">Nobody flagged.</div>'; return; }
     function cell(c, hit, label) {  // two decimals so a value just above a threshold doesn't read as equal to it
       var v = !c ? "—" : hit ? '<span class="pill down">' + pctText(c.pct, 2) + "</span>" : '<span class="' + (c.pct > 0 ? "up" : "down") + '">' + pctText(c.pct, 2) + "</span>";
